@@ -1,0 +1,222 @@
+from collections import Counter, deque
+import queue
+from math import sqrt
+
+
+def bfs(initial_state):
+    frontier = [initial_state]
+    explore = set()
+    parent_map = {}
+    frontier_state = {initial_state: True}
+    
+    while frontier:
+        state = frontier.pop(0)
+        explore.add(state)
+        frontier_state.pop(state)
+
+        if state == "012345678":
+            return find_path(parent_map, initial_state)
+        else:
+            for child in generate_children(state):
+                if child not in frontier_state and child not in explore:
+                    parent_map[child] = state
+                    frontier_state[child] = True
+                    frontier.append(child)
+
+    return []
+
+
+def dfs(initial_state):
+    frontier = deque()
+    frontier.append(initial_state)
+    frontier_state = {initial_state: True}
+    explore = set()
+    parent_map = {}
+    
+    while frontier:
+        state = frontier.pop()
+        frontier_state.pop(state)
+        explore.add(state)
+
+        if state == "012345678":
+            return find_path(parent_map, initial_state)
+        else:
+            for child in reversed(generate_children(state)):
+                if child not in frontier_state and child not in explore:
+                    parent_map[child] = state
+                    frontier_state[child] = True
+                    frontier.append(child)
+
+    return []
+
+
+def is_solvable(state):
+    inv_count = 0
+    empty_value = 0
+    for i in range(0, 9):
+        for j in range(i + 1, 9):
+            if int(state[j]) != empty_value and int(state[i]) != empty_value and int(state[i]) > int(state[j]):
+                inv_count += 1
+    return inv_count % 2 == 0
+
+
+def swap(s, i, j):
+    lst = list(s)
+    lst[i], lst[j] = lst[j], lst[i]
+    return ''.join(lst)
+
+
+def generate_children(state):
+    state = str(state)
+    children = []
+
+    index = state.index("0")
+
+    if index > 2:
+        children.append(swap(state, index, index - 3))
+
+    if index < 6:
+        children.append((swap(state, index, index + 3)))
+
+    if index % 3 > 0:
+        children.append(swap(state, index, index - 1))
+
+    if index % 3 < 2:
+        children.append(swap(state, index, index + 1))
+
+    return children
+
+
+def print_path(game):
+    game = game[::-1]
+    print("\nPath to solution:")
+    print("=" * 20)
+    for step, state in enumerate(game):
+        print(f"\nStep {step}:")
+        for i in range(9):
+            if i % 3 == 0 and i != 0:
+                print()
+            print(state[i], end=" ")
+        print()
+        if step < len(game) - 1:
+            print("-" * 9)
+    print("\n" + "=" * 20)
+    print(f"Puzzle solved in {len(game) - 1} moves!")
+
+
+def find_path(parent_map, initial_state):
+    current_state = "012345678"
+    path = [current_state]
+    
+    while current_state != initial_state:
+        path.append(parent_map[current_state])
+        current_state = parent_map.get(current_state)
+    
+    print_path(path)
+
+
+def A_star(initial_state, heuristic):
+    frontier = queue.PriorityQueue()
+    frontier.put([heuristic(initial_state), initial_state])
+    explored = set()
+    parent_map = {}
+    
+    while not frontier.empty():
+        state1 = frontier.get()
+        prev_cost = state1[0]
+        state = state1[1]
+        explored.add(state)
+
+        if state == "012345678":
+            return find_path(parent_map, initial_state)
+
+        for child in generate_children(state):
+            if child not in frontier.queue and child not in explored:
+                parent_map[child] = state
+                frontier.put([heuristic(child) + prev_cost + 1, child])
+
+    return []
+
+
+def manhattan_distance(state, goal="012345678", col=3):
+    h = 0
+    for c in state:
+        index = state.find(c)
+        target = goal.find(c)
+        x_index = index % col
+        y_index = index // col
+        x_target = target % col
+        y_target = target // col
+        h = h + abs(x_index - x_target) + abs(y_index - y_target)
+    return h
+
+
+def euclides_distance(state, goal="012345678", col=3):
+    h = 0
+    for c in state:
+        index = state.find(c)
+        target = goal.find(c)
+        x_index = index % col
+        y_index = index // col
+        x_target = target % col
+        y_target = target // col
+        h = h + sqrt((x_index - x_target) ** 2 + (y_index - y_target) ** 2)
+    return h
+
+
+def solver(initial_state, algorithm, heuristic=None):
+    if algorithm == 1:
+        bfs(initial_state)
+    elif algorithm == 2:
+        dfs(initial_state)
+    elif algorithm == 3:
+        if heuristic == 1:
+            A_star(initial_state, manhattan_distance)
+        elif heuristic == 2:
+            A_star(initial_state, euclides_distance)
+
+
+if __name__ == '__main__':
+    print("Welcome to 8_puzzle solver")
+
+    while True:
+        while True:
+            initial_state = input("\nInsert initial state: ")
+            freq = Counter(initial_state)
+            if len(initial_state) == len(freq) == 9 and initial_state.isdecimal():
+                break
+            print("Wrong initial state")
+
+        print("\nAlgorithms")
+        print("-----------")
+        print("[1] BFS")
+        print("[2] DFS")
+        print("[3] A*")
+        
+        while True:
+            switch = int(input("=>"))
+            if switch in range(1, 4):
+                break
+            print("Invalid choice")
+
+        if not is_solvable(initial_state):
+            print(f"\n{initial_state} Cannot be solved")
+            continue
+
+        if switch == 1 or switch == 2:
+            solver(initial_state, switch)
+        elif switch == 3:
+            print("\nChoose heuristic:")
+            print("-----------------")
+            print("[1] Manhattan")
+            print("[2] Euclidean")
+            
+            while True:
+                h = int(input("=>"))
+                if h in [1, 2]:
+                    break
+                print("Invalid choice")
+
+            solver(initial_state, switch, h)
+        
+        print("\n" + "="*40)
