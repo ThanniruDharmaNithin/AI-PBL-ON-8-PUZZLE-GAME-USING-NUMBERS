@@ -109,9 +109,6 @@ Potential improvements and extensions:
 ## 👨‍💻 Author
 
 **Thanniru Dharma Nithin**  
-Data Analytics & Python Enthusiast – Coding Ninjas  
-GitHub: [https://github.com/ThanniruDharmaNithin](https://github.com/ThanniruDharmaNithin)  
-
 ---
 
 ⭐ If you find this project useful, feel free to star the repository!
